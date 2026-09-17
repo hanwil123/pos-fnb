@@ -1,0 +1,102 @@
+# Development Docker Compose
+# Jalankan: docker compose -f docker-compose.dev.yml up
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pos-fnb-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+      POSTGRES_DB: ${DB_NAME:-pos_fnb_dev}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - pos-network-dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: pos-fnb-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata_dev:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+    networks:
+      - pos-network-dev
+
+  # Development mode dengan hot reload
+  # Gunakan Air untuk hot reload: https://github.com/cosmtrek/air
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: dev
+    container_name: pos-fnb-api-dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME:-POS Backend Dev}
+      APP_PORT: ${APP_PORT:-8080}
+      APP_ENV: development
+      LOG_LEVEL: debug
+      
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      DB_NAME: ${DB_NAME:-pos_fnb_dev}
+      DB_SSLMODE: disable
+      DB_AUTO_MIGRATE: "true"
+      DB_SEED: "true"
+      
+      REDIS_HOST: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: ${REDIS_DB:-0}
+      
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-only}
+      ACCESS_TOKEN_EXPIRED: ${ACCESS_TOKEN_EXPIRED:-120}
+      REFRESH_TOKEN_EXPIRED: ${REFRESH_TOKEN_EXPIRED:-240}
+      
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET:-dev-qr-secret-only}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      # Mount source code untuk hot reload
+      - .:/app
+      - ./uploads:/app/uploads
+      # Cache Go modules
+      - go_modules:/go/pkg/mod
+    networks:
+      - pos-network-dev
+    command: air -c .air.toml
+
+volumes:
+  pgdata_dev:
+    driver: local
+  redisdata_dev:
+    driver: local
+  go_modules:
+    driver: local
+
+networks:
+  pos-network-dev:
+    driver: bridge

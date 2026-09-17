@@ -1,0 +1,113 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pos-fnb-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+      POSTGRES_DB: ${DB_NAME:-pos_fnb}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pos-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: pos-fnb-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - pos-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pos-fnb-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME:-POS Backend}
+      APP_PORT: ${APP_PORT:-8080}
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      DB_NAME: ${DB_NAME:-pos_fnb}
+      DB_SSLMODE: ${DB_SSLMODE:-disable}
+      DB_AUTO_MIGRATE: ${DB_AUTO_MIGRATE:-true}
+      DB_SEED: ${DB_SEED:-false}
+
+      REDIS_HOST: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: ${REDIS_DB:-0}
+
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-jangan-dipakai-production}
+      ACCESS_TOKEN_EXPIRED: ${ACCESS_TOKEN_EXPIRED:-120}
+      REFRESH_TOKEN_EXPIRED: ${REFRESH_TOKEN_EXPIRED:-240}
+
+      QR_HMAC_SECRET: ${QR_HMAC_SECRET:-dev-secret-lain-jangan-dipakai-production}
+
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@posfnb.app}
+
+      STORAGE_PATH: ${STORAGE_PATH:-uploads}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - pos-network
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: pos-fnb-ngrok
+    restart: unless-stopped
+    command:
+      - "http"
+      - "api:8080"
+    environment:
+      - NGROK_AUTHTOKEN=2MVNl0JQfsHW2wjUHD7IURf4BTI_5YLtFMXVid3K8qV93whue
+    ports:
+      - "4040:4040"
+    depends_on:
+      - api
+    networks:
+      - pos-network
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+networks:
+  pos-network:
+    driver: bridge

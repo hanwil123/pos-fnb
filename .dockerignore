@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Documentation
+*.md
+README.md
+ARCHITECTURE.md
+ARCHITECTURE_DIAGRAM.md
+REFACTORING_SUMMARY.md
+
+# Build artifacts
+*.exe
+*.test
+*.out
+api.exe
+__debug_bin
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Uploads (will be mounted as volume)
+uploads/
+
+# Logs
+*.log
+logs/
