@@ -49,6 +49,8 @@ func Setup(db *gorm.DB, cfg *config.Config) http.Handler {
 		v1.Post("/menu-itemss", menuHandler.CreateMenuItem)
 		v1.Post("/orders/scan-qrr", orderHandler.ScanCashierQR)
 		v1.Post("/payments/confirmm", orderHandler.ConfirmCashPayment)
+		v1.Post("/menu-categories", menuHandler.CreateCategory)
+		v1.Get("/menu-categories/{restaurant_id}", menuHandler.GetAllCategories)
 		v1.Get("/menu", menuHandler.GetMenu)
 		v1.Get("/menu/recommendations", menuHandler.GetRecommendations)
 		v1.Post("/orders", orderHandler.CreateOrder)

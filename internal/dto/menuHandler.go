@@ -2,6 +2,34 @@ package dto
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 
+type CreateMenuCategoryRequest struct {
+	RestaurantID string `json:"restaurant_id"`
+	Name         string `json:"name"`
+	Slug         string `json:"slug"`
+	Icon         string `json:"icon"`
+	SortOrder    int    `json:"sort_order"`
+}
+
+type UpdateMenuCategoryRequest struct {
+	Name      string `json:"name"`
+	Slug      string `json:"slug"`
+	Icon      string `json:"icon"`
+	SortOrder int    `json:"sort_order"`
+	IsActive  bool   `json:"is_active"`
+}
+
+type DeleteMenuCategoryRequest struct {
+	ID string `json:"id"`
+}
+
+type ReorderMenuCategoryRequest struct {
+	Items []ReorderMenuCategoryItem `json:"items"`
+}
+
+type ReorderMenuCategoryItem struct {
+	ID        string `json:"id"`
+	SortOrder int    `json:"sort_order"`
+}
 type CreateMenuItemRequest struct {
 	RestaurantID string   `json:"restaurant_id"`
 	CategoryID   string   `json:"category_id"`
@@ -46,8 +74,11 @@ type MenuCategoryResponse struct {
 	ID           string             `json:"id"`
 	RestaurantID string             `json:"restaurant_id"`
 	Name         string             `json:"name"`
+	Slug         string             `json:"slug"`
+	Icon         string             `json:"icon"`
 	SortOrder    int                `json:"sort_order"`
-	Items        []MenuItemResponse `json:"items"`
+	IsActive     bool               `json:"is_active"`
+	Items        []MenuItemResponse `json:"items,omitempty"`
 }
 
 type RecommendationsResponse struct {

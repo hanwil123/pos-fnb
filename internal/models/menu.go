@@ -9,7 +9,10 @@ type MenuCategory struct {
 	BaseModel
 	RestaurantID uuid.UUID `gorm:"type:uuid;not null;index" json:"restaurant_id"`
 	Name         string    `gorm:"not null" json:"name"`
+	Slug         string    `gorm:"not null;index:idx_category_slug,unique" json:"slug"`
+	Icon         string    `json:"icon"`
 	SortOrder    int       `gorm:"default:0" json:"sort_order"`
+	IsActive     bool      `gorm:"default:true" json:"is_active"`
 }
 
 // MenuItem merepresentasikan satu item menu.
@@ -27,4 +30,3 @@ type MenuItem struct {
 	IsAvailable  bool           `gorm:"default:true" json:"is_available"`
 	Tags         pq.StringArray `gorm:"type:text[]" json:"tags"`
 }
-

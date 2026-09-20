@@ -12,6 +12,9 @@ type MenuService interface {
 	GetMenu(restaurantID string) ([]dto.MenuCategoryResponse, error)
 	GetRecommendations(restaurantID string) (*dto.RecommendationsResponse, error)
 	CreateMenuItem(req *dto.CreateMenuItemRequest) (*dto.MenuItemResponse, error)
+	CreateCategory(req *dto.CreateMenuCategoryRequest) (*dto.MenuCategoryResponse, error)
+	// GetAllCategories() ([]dto.MenuCategoryResponse, error)
+	GetCategoryByID(categoryID string) (*[]dto.MenuCategoryResponse, error)
 }
 
 type menuService struct {
@@ -62,7 +65,10 @@ func (s *menuService) GetMenu(restaurantID string) ([]dto.MenuCategoryResponse, 
 			ID:           cat.ID.String(),
 			RestaurantID: cat.RestaurantID.String(),
 			Name:         cat.Name,
+			Slug:         cat.Slug,
+			Icon:         cat.Icon,
 			SortOrder:    cat.SortOrder,
+			IsActive:     cat.IsActive,
 			Items:        grouped[cat.ID.String()],
 		})
 	}
@@ -144,3 +150,81 @@ func (s *menuService) CreateMenuItem(req *dto.CreateMenuItemRequest) (*dto.MenuI
 	}, nil
 }
 
+func (s *menuService) CreateCategory(req *dto.CreateMenuCategoryRequest) (*dto.MenuCategoryResponse, error) {
+	restaurantID, err := uuid.Parse(req.RestaurantID)
+	if err != nil {
+		return nil, err
+	}
+
+	category := &models.MenuCategory{
+		RestaurantID: restaurantID,
+		Name:         req.Name,
+		Slug:         req.Slug,
+		Icon:         req.Icon,
+		SortOrder:    req.SortOrder,
+		IsActive:     true,
+	}
+
+	if err := s.repo.CreateCategory(category); err != nil {
+		return nil, err
+	}
+
+	return &dto.MenuCategoryResponse{
+		ID:           category.ID.String(),
+		RestaurantID: category.RestaurantID.String(),
+		Name:         category.Name,
+		Slug:         category.Slug,
+		Icon:         category.Icon,
+		SortOrder:    category.SortOrder,
+		IsActive:     category.IsActive,
+	}, nil
+}
+
+// func (s *menuService) GetAllCategories() ([]dto.MenuCategoryResponse, error) {
+// 	categories, err := s.repo.GetAllCategories()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	result := make([]dto.MenuCategoryResponse, 0, len(categories))
+// 	for _, cat := range categories {
+// 		result = append(result, dto.MenuCategoryResponse{
+// 			ID:           cat.ID.String(),
+// 			RestaurantID: cat.RestaurantID.String(),
+// 			Name:         cat.Name,
+// 			Slug:         cat.Slug,
+// 			Icon:         cat.Icon,
+// 			SortOrder:    cat.SortOrder,
+// 			IsActive:     cat.IsActive,
+// 		})
+// 	}
+
+// 	return result, nil
+// }
+
+func (s *menuService) GetCategoryByID(restaurantID string) (*[]dto.MenuCategoryResponse, error) {
+	restaurantsID, err := uuid.Parse(restaurantID)
+	if err != nil {
+		return nil, err
+	}
+
+	category, err := s.repo.GetCategoriesByRestaurantID(restaurantsID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.MenuCategoryResponse, 0, len(category))
+	for _, cat := range category {
+		result = append(result, dto.MenuCategoryResponse{
+			ID:           cat.ID.String(),
+			RestaurantID: cat.RestaurantID.String(),
+			Name:         cat.Name,
+			Slug:         cat.Slug,
+			Icon:         cat.Icon,
+			SortOrder:    cat.SortOrder,
+			IsActive:     cat.IsActive,
+		})
+	}
+
+	return &result, nil
+}

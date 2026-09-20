@@ -20,7 +20,7 @@ const (
 // Di production, ganti "*" dengan domain frontend yang sebenarnya.
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", " https://pos-fnb-nu.vercel.app/")
+		w.Header().Set("Access-Control-Allow-Origin", " https://pos-fnb-nu.vercel.app/, http://localhost:3000, https://7bbd-180-251-183-213.ngrok-free.app")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 

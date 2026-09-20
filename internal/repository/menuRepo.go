@@ -14,6 +14,11 @@ type MenuRepository interface {
 	CreateItem(item *models.MenuItem) error
 	UpdateItem(item *models.MenuItem) error
 	DeleteItem(id uuid.UUID) error
+	CreateCategory(category *models.MenuCategory) error
+	GetCategory(id uuid.UUID) (*models.MenuCategory, error)
+	// GetAllCategories() ([]models.MenuCategory, error)
+	// UpdateCategory(category *models.MenuCategory) error
+	// DeleteCategory(id uuid.UUID) error
 }
 
 type menuRepository struct {
@@ -73,3 +78,23 @@ func (r *menuRepository) UpdateItem(item *models.MenuItem) error {
 func (r *menuRepository) DeleteItem(id uuid.UUID) error {
 	return r.db.Delete(&models.MenuItem{}, "id = ?", id).Error
 }
+
+func (r *menuRepository) CreateCategory(category *models.MenuCategory) error {
+	return r.db.Create(category).Error
+}
+
+func (r *menuRepository) GetCategory(id uuid.UUID) (*models.MenuCategory, error) {
+	var category models.MenuCategory
+	if err := r.db.Where("id = ?", id).First(&category).Error; err != nil {
+		return nil, err
+	}
+	return &category, nil
+}
+
+// func (r *menuRepository) GetAllCategories() ([]models.MenuCategory, error) {
+// 	var categories []models.MenuCategory
+// 	if err := r.db.Find(&categories).Error; err != nil {
+// 		return nil, err
+// 	}
+// 	return categories, nil
+// }

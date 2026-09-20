@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/yourorg/pos-fnb-backend/internal/dto"
 	"github.com/yourorg/pos-fnb-backend/internal/services"
 	"github.com/yourorg/pos-fnb-backend/internal/utils"
@@ -76,4 +77,37 @@ func (h *MenuHandler) CreateMenuItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.Success(w, http.StatusCreated, result)
+}
+
+func (h *MenuHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
+	var req dto.CreateMenuCategoryRequest
+	if err := utils.DecodeJSON(r, &req); err != nil {
+		utils.Error(w, http.StatusBadRequest, "body request tidak valid")
+		return
+	}
+
+	if req.RestaurantID == "" || req.Name == "" || req.Slug == "" {
+		utils.Error(w, http.StatusBadRequest, "restaurant_id, name, dan slug wajib diisi")
+		return
+	}
+
+	result, err := h.service.CreateCategory(&req)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "gagal membuat kategori: "+err.Error())
+		return
+	}
+
+	utils.Success(w, http.StatusCreated, result)
+}
+
+func (h *MenuHandler) GetAllCategories(w http.ResponseWriter, r *http.Request) {
+	restaurant_id := chi.URLParam(r, "restaurant_id")
+
+	result, err := h.service.GetCategoryByID(restaurant_id)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "gagal mengambil semua kategori: "+err.Error())
+		return
+	}
+
+	utils.Success(w, http.StatusOK, result)
 }
